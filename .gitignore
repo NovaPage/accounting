@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+run_gemini_commit_inline.sh
+tree_structure.sh
