@@ -1,20 +1,28 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+/**
+ * Private dashboard page (Server Component).
+ * - Redirects to /sign-in if there is no authenticated user.
+ * UI strings in Spanish.
+ */
+import { redirect } from "next/navigation";
+import { getServerComponentClient } from "@/lib/supabase/server";
+import SignOutButton from "@/components/auth/SignOutButton";
+import { JSX } from "react";
 
-export default function DashboardPage() {
+export default async function DashboardPage(): Promise<JSX.Element> {
+  const supabase = await getServerComponentClient();
+  const { data, error } = await supabase.auth.getUser();
+
+  if (error || !data?.user) {
+    redirect("/login");
+  }
+
+  const email = data.user.email ?? "usuario";
+
   return (
-    <div className="grid md:grid-cols-3 gap-6">
-      <Card>
-        <CardHeader><CardTitle>KPI One</CardTitle></CardHeader>
-        <CardContent className="text-3xl font-bold">42</CardContent>
-      </Card>
-      <Card>
-        <CardHeader><CardTitle>KPI Two</CardTitle></CardHeader>
-        <CardContent className="text-3xl font-bold">97%</CardContent>
-      </Card>
-      <Card>
-        <CardHeader><CardTitle>Status</CardTitle></CardHeader>
-        <CardContent>All systems nominal.</CardContent>
-      </Card>
-    </div>
+    <main className="p-6 space-y-4">
+      <h1 className="text-2xl font-semibold">Panel</h1>
+      <p className="text-sm text-muted-foreground">Bienvenido, {email}</p>
+      <SignOutButton />
+    </main>
   );
 }
