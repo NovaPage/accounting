@@ -2,8 +2,9 @@
 
 /**
  * Email & Password authentication (login + sign-up).
- * - Adds cursor-pointer, hover styles on tabs and buttons, and a visible "mode" chip for the active tab.
- * - Spanish UI; English code/comments.
+ * - After successful sign-up: switch to "login" tab, prefill email, focus password.
+ * - Uses Supabase: signInWithPassword / signUp (with emailRedirectTo).
+ * - Spanish UI; English code/comments. Strict TS (no any).
  */
 import { useMemo, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -61,6 +62,8 @@ export default function EmailPasswordAuth({ nextUrl = "/dashboard" }: EmailPassw
     register: registerIn,
     handleSubmit: handleSubmitIn,
     formState: { errors: errorsIn, isSubmitting: submittingIn },
+    setValue: setValueIn,
+    setFocus: setFocusIn,
   } = useForm<SignInValues>({
     resolver: zodResolver(signInSchema),
     defaultValues: { email: "", password: "" },
@@ -107,12 +110,17 @@ export default function EmailPasswordAuth({ nextUrl = "/dashboard" }: EmailPassw
         setServerMsg(error.message || "No se pudo crear la cuenta.");
         return;
       }
+
+      // Success: switch to login, prefill email, focus password, show guidance
       resetUp();
+      setActive("login");
+      setValueIn("email", values.email, { shouldValidate: true });
+      setFocusIn("password");
       setServerMsg(
-        "Te enviamos un correo de confirmación. Revisa tu bandeja y sigue el enlace para continuar."
+        "Te enviamos un correo de confirmación. Revisa tu bandeja y, cuando confirmes, inicia sesión aquí."
       );
     },
-    [emailRedirectTo, resetUp, supabase]
+    [emailRedirectTo, resetUp, setActive, setFocusIn, setValueIn, supabase]
   );
 
   return (
