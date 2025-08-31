@@ -9,7 +9,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
-  title: "App",
+  title: "Orbit",
   description: "Starter ready to build.",
 };
 
