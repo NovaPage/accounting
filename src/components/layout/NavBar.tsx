@@ -1,16 +1,34 @@
-"use client";
+// File: src/components/layout/NavBar.tsx
+/**
+ * Top navigation bar (Server Component).
+ * - Renders links and client controls (ThemeToggle).
+ * - Embeds SpaceSwitcher (Server) for SSR data and server action.
+ *
+ * UI strings in Spanish; code and comments in English.
+ */
+
 import Link from "next/link";
-import { ThemeToggle } from "./ThemeToggle";
+import { ThemeToggle } from "./ThemeToggle"; // client component is fine inside server
+import SpaceSwitcher from "./SpaceSwitcher";
 
 export function NavBar() {
   return (
     <header className="w-full border-b">
-      <div className="mx-auto max-w-7xl px-4 h-14 flex items-center justify-between">
-        <Link href="/" className="font-semibold">Orbit</Link>
-        <nav className="flex items-center gap-4 text-sm">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
+        <Link href="/" className="font-semibold">
+          Orbit
+        </Link>
+
+        <nav className="flex items-center gap-3 text-sm">
           <Link href="/dashboard">Dashboard</Link>
           <Link href="/forms">Forms</Link>
           <Link href="/theme">Theme</Link>
+
+          {/* Right-side controls */}
+          {/* Space switcher (Server) for SSR fetch + server action */}
+          <SpaceSwitcher />
+
+          {/* Theme toggle (Client) */}
           <ThemeToggle />
         </nav>
       </div>
