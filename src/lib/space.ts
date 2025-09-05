@@ -204,3 +204,24 @@ export async function selectActiveSpaceId(nextSpaceId: string): Promise<string> 
     return fallback;
   }
 }
+
+/**
+ * Gets the active space.
+ * This can be called from client components.
+ */
+export async function getSpace() {
+  const spaceId = await ensureActiveSpaceId();
+  const space = await fetchSpaceById(spaceId);
+  return space;
+}
+
+/**
+ * Gets the active space.
+ * This can be called from server components.
+ * @returns The active space, or null if it doesn't exist.
+ */
+export async function getActiveSpace() {
+  const spaceId = await ensureActiveSpaceId();
+  const space = await fetchSpaceById(spaceId);
+  return space;
+}

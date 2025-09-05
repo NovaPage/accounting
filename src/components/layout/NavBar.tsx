@@ -10,8 +10,12 @@
 import Link from "next/link";
 import { ThemeToggle } from "./ThemeToggle"; // client component is fine inside server
 import SpaceSwitcher from "./SpaceSwitcher";
+import GlobalAdd from "@/components/transactions/GlobalAdd";
+import { getActiveSpace } from "@/lib/space";
 
-export function NavBar() {
+export async function NavBar() {
+  const space = await getActiveSpace();
+
   return (
     <header className="w-full border-b">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
@@ -27,6 +31,8 @@ export function NavBar() {
           {/* Right-side controls */}
           {/* Space switcher (Server) for SSR fetch + server action */}
           <SpaceSwitcher />
+
+          <GlobalAdd space={space} />
 
           {/* Theme toggle (Client) */}
           <ThemeToggle />

@@ -5,33 +5,32 @@
  * Keep these pure and stable. No fetch logic here.
  */
 
-export const spaceKeys = {
-  all: ["spaces"] as const,
-  list: (userId: string) => [...spaceKeys.all, "list", { userId }] as const,
-  detail: (spaceId: string) => [...spaceKeys.all, "detail", { spaceId }] as const,
-};
-
-export const accountKeys = {
-  all: (spaceId: string) => ["accounts", { spaceId }] as const,
-  list: (spaceId: string) => [...accountKeys.all(spaceId), "list"] as const,
-  balances: (spaceId: string) => [...accountKeys.all(spaceId), "balances"] as const,
-};
-
-export const categoryKeys = {
-  all: (spaceId: string) => ["categories", { spaceId }] as const,
-  list: (spaceId: string) => [...categoryKeys.all(spaceId), "list"] as const,
-};
-
-export const budgetKeys = {
-  all: (spaceId: string) => ["budgets", { spaceId }] as const,
-  month: (spaceId: string, monthISO: string) =>
-    [...budgetKeys.all(spaceId), "month", { monthISO }] as const,
-};
-
-export const journalKeys = {
-  all: (spaceId: string) => ["journals", { spaceId }] as const,
-  list: (spaceId: string, filters?: Record<string, unknown>) =>
-    [...journalKeys.all(spaceId), "list", { ...(filters ?? {}) }] as const,
-  detail: (spaceId: string, journalId: string) =>
-    [...journalKeys.all(spaceId), "detail", { journalId }] as const,
+export const queryKeys = {
+  space: ["space"] as const,
+  spaces: {
+    all: ["spaces"] as const,
+    list: (userId: string) => [...queryKeys.spaces.all, "list", { userId }] as const,
+    detail: (spaceId: string) => [...queryKeys.spaces.all, "detail", { spaceId }] as const,
+  },
+  accounts: {
+    all: (spaceId: string) => ["accounts", { spaceId }] as const,
+    list: (spaceId: string) => [...queryKeys.accounts.all(spaceId), "list"] as const,
+    balances: (spaceId: string) => [...queryKeys.accounts.all(spaceId), "balances"] as const,
+  },
+  categories: {
+    all: (spaceId: string) => ["categories", { spaceId }] as const,
+    list: (spaceId: string) => [...queryKeys.categories.all(spaceId), "list"] as const,
+  },
+  budgets: {
+    all: (spaceId: string) => ["budgets", { spaceId }] as const,
+    month: (spaceId: string, monthISO: string) =>
+      [...queryKeys.budgets.all(spaceId), "month", { monthISO }] as const,
+  },
+  journals: {
+    all: (spaceId: string) => ["journals", { spaceId }] as const,
+    list: (spaceId: string, filters?: Record<string, unknown>) =>
+      [...queryKeys.journals.all(spaceId), "list", { ...(filters ?? {}) }] as const,
+    detail: (spaceId: string, journalId: string) =>
+      [...queryKeys.journals.all(spaceId), "detail", { journalId }] as const,
+  },
 };
