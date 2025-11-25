@@ -43,6 +43,32 @@ export type Database = {
           updated_at?: string;
         };
       };
+      categories: {
+        Row: {
+          id: string;
+          name: string;
+          space_id: string;
+          is_archived: boolean | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          space_id: string;
+          is_archived?: boolean | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          space_id?: string;
+          is_archived?: boolean | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
       transactions: {
         Row: {
           id: string;
