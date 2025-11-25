@@ -110,6 +110,14 @@ export async function upsertAccountAction(
           { feature: "accounts" },
           { message: error.message, code: (error as { code?: string }).code },
         );
+
+        if ((error as { code?: string }).code === "23505") {
+          return {
+            ok: false,
+            message: "Ya existe una cuenta con ese nombre en este espacio.",
+          };
+        }
+
         return {
           ok: false,
           message:
@@ -145,6 +153,14 @@ export async function upsertAccountAction(
         { feature: "accounts" },
         { id: values.id, message: upErr.message, code: (upErr as { code?: string }).code },
       );
+
+      if ((upErr as { code?: string }).code === "23505") {
+        return {
+          ok: false,
+          message: "Ya existe una cuenta con ese nombre en este espacio.",
+        };
+      }
+
       return {
         ok: false,
         message:

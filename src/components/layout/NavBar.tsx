@@ -12,9 +12,49 @@ import { ThemeToggle } from "./ThemeToggle"; // client component is fine inside 
 import SpaceSwitcher from "./SpaceSwitcher";
 import GlobalAdd from "@/components/transactions/GlobalAdd";
 import { getActiveSpace } from "@/lib/space";
+import { getServerComponentClient } from "@/lib/supabase/server";
 
 export async function NavBar() {
-  const space = await getActiveSpace();
+  const supabase = await getServerComponentClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return (
+      <header className="w-full border-b">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
+          <Link href="/" className="font-semibold">
+            Orbit
+          </Link>
+
+          <nav className="flex items-center gap-3 text-sm">
+            <Link href="/login">Iniciar Sesión</Link>
+            <ThemeToggle />
+          </nav>
+        </div>
+      </header>
+    );
+  }
+
+  // Only fetch space if user is authenticated
+  let space;
+  try {
+    space = await getActiveSpace();
+  } catch (e) {
+    // Fallback if space fetch fails (e.g. during onboarding edge cases)
+    console.error("NavBar space fetch error:", e);
+    return (
+      <header className="w-full border-b">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
+          <Link href="/" className="font-semibold">
+            Orbit
+          </Link>
+          <nav className="flex items-center gap-3 text-sm">
+            <ThemeToggle />
+          </nav>
+        </div>
+      </header>
+    )
+  }
 
   return (
     <header className="w-full border-b">

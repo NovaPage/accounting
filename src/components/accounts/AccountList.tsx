@@ -206,7 +206,7 @@ export default function AccountList({
       <Separator className="mb-4" />
 
       {/* Rows */}
-      <ul className="space-y-2">
+      <ul className={`space-y-2 transition-opacity duration-200 ${isRefreshing ? "opacity-50 pointer-events-none" : ""}`}>
         {list.map((row) => {
           const fmt = new Intl.NumberFormat("es-CO", {
             style: "currency",
@@ -267,7 +267,7 @@ export default function AccountList({
           <AlertDialogHeader>
             <AlertDialogTitle>¿Archivar cuenta?</AlertDialogTitle>
           </AlertDialogHeader>
-        <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             La cuenta no se eliminará y podrás consultarla más tarde. Esta acción no afecta tus
             movimientos históricos.
           </p>

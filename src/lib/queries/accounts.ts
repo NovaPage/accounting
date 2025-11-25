@@ -27,6 +27,13 @@ export async function fetchAccounts(spaceId: string): Promise<AccountBalanceRow[
   const supabase = await getServerComponentClient();
 
   try {
+    // 0) Verify user session exists to avoid RLS/Auth errors
+    const { data: { user }, error: userErr } = await supabase.auth.getUser();
+    if (userErr || !user) {
+      // Silent return if no user, avoiding console noise
+      return [];
+    }
+
     // 1) Trae todas las cuentas del espacio (metadata)
     const { data: accounts, error: accErr } = await supabase
       .from("accounts")
@@ -59,14 +66,13 @@ export async function fetchAccounts(spaceId: string): Promise<AccountBalanceRow[
     const balanceMap = new Map<string, number>();
 
     try {
-      const rpc = (supabase as unknown as { rpc: RpcCaller }).rpc;
-      const { data: rpcRows, error: rpcErr } = await rpc("get_balances_for_accounts", {
+      const { data: rpcRows, error: rpcErr } = await supabase.rpc("get_balances_for_accounts", {
         p_space_id: spaceId,
         p_account_ids: ids,
       });
       if (rpcErr) throw rpcErr;
 
-      for (const r of rpcRows ?? []) {
+      for (const r of (rpcRows as unknown as GetBalancesRow[]) ?? []) {
         const n = typeof r.balance === "number" ? r.balance : Number(r.balance ?? 0);
         if (!Number.isNaN(n)) balanceMap.set(r.account_id, n);
       }

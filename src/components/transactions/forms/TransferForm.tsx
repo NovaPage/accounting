@@ -1,12 +1,5 @@
-// File: src/components/transactions/forms/IncomeForm.tsx
+// File: src/components/transactions/forms/TransferForm.tsx
 "use client";
-
-/**
- * IncomeForm (stub for Hito 1)
- * - Minimal fields + shallow validation (Zod).
- * - No persistence yet: simulates success and calls `onSubmitted`.
- * - Spanish UI; code/comments in English.
- */
 
 import * as React from "react";
 import { useTransition } from "react";
@@ -20,56 +13,57 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { upsertTransactionAction } from "@/app/actions/transactions";
 
 const CURRENCIES = ["COP", "USD", "EUR"] as const;
 export type CurrencyCode = (typeof CURRENCIES)[number];
 export type SelectOption = { value: string; label: string };
 
-export type IncomeFormProps = {
+export type TransferFormProps = {
   spaceId: string;
   onSubmitted?: () => void;
   accounts?: SelectOption[];
-  categories?: SelectOption[]; // income categories
   defaultCurrency?: CurrencyCode;
 };
 
-const IncomeSchema = z.object({
+const TransferSchema = z.object({
   date: z.string().min(1, { message: "Selecciona una fecha." }),
-  account_id: z.string().min(1, { message: "Selecciona una cuenta." }),
+  account_id: z.string().min(1, { message: "Selecciona la cuenta origen." }),
+  destination_account_id: z.string().min(1, { message: "Selecciona la cuenta destino." }),
   amount: z.coerce.number().positive({ message: "Ingresa un monto mayor a 0." }),
   currency_code: z.enum(CURRENCIES, { message: "Selecciona una moneda." }),
-  category_id: z.string().min(1, { message: "Selecciona una categoría." }),
   note: z
     .string()
     .max(140, { message: "Máximo 140 caracteres." })
     .optional()
     .or(z.literal("")),
   fx_rate_to_space: z.coerce.number().positive({ message: "Ingresa una tasa válida (> 0)." }).default(1),
+}).refine((data) => data.account_id !== data.destination_account_id, {
+  message: "La cuenta destino debe ser diferente a la de origen.",
+  path: ["destination_account_id"],
 });
 
-type IncomeInput = z.input<typeof IncomeSchema>;
-type IncomeValues = z.output<typeof IncomeSchema>;
+type TransferInput = z.input<typeof TransferSchema>;
+type TransferValues = z.output<typeof TransferSchema>;
 
-export default function IncomeForm(props: IncomeFormProps): React.ReactElement {
+export default function TransferForm(props: TransferFormProps): React.ReactElement {
   const {
-    spaceId: _spaceId,
+    spaceId,
     onSubmitted,
     accounts = [],
-    categories = [],
     defaultCurrency = "COP",
   } = props;
-  void _spaceId;
 
   const [isPending, startTransition] = useTransition();
 
-  const form = useForm<IncomeInput, undefined, IncomeValues>({
-    resolver: zodResolver(IncomeSchema),
+  const form = useForm<TransferInput, undefined, TransferValues>({
+    resolver: zodResolver(TransferSchema),
     defaultValues: {
       date: new Date().toISOString().slice(0, 10),
       account_id: accounts[0]?.value ?? "",
+      destination_account_id: accounts.length > 1 ? accounts[1].value : "",
       amount: 0,
       currency_code: defaultCurrency,
-      category_id: categories[0]?.value ?? "",
       note: "",
       fx_rate_to_space: 1,
     },
@@ -79,27 +73,34 @@ export default function IncomeForm(props: IncomeFormProps): React.ReactElement {
   const selectedCurrency = form.watch("currency_code");
   const showFx = selectedCurrency !== defaultCurrency;
 
-  const onSubmit: SubmitHandler<IncomeValues> = () => {
-    startTransition(() => {
-      toast.success("Ingreso simulado guardado.");
-      onSubmitted?.();
-      form.reset({
-        date: new Date().toISOString().slice(0, 10),
-        account_id: accounts[0]?.value ?? "",
-        amount: 0,
-        currency_code: defaultCurrency,
-        category_id: categories[0]?.value ?? "",
-        note: "",
-        fx_rate_to_space: 1,
+  const onSubmit: SubmitHandler<TransferValues> = (values) => {
+    startTransition(async () => {
+      const res = await upsertTransactionAction({
+        spaceId,
+        type: "transfer",
+        date: values.date,
+        amount: values.amount,
+        currency_code: values.currency_code,
+        account_id: values.account_id,
+        destination_account_id: values.destination_account_id,
+        description: values.note,
       });
+
+      if (!res.ok) {
+        toast.error(res.message);
+        return;
+      }
+
+      toast.success("Transferencia registrada.");
+      onSubmitted?.();
+      form.reset();
     });
   };
 
   const hasAccounts = accounts.length > 0;
-  const hasCategories = categories.length > 0;
 
   return (
-    <form className="grid gap-4" onSubmit={form.handleSubmit(onSubmit)} aria-label="Registrar ingreso">
+    <form className="grid gap-4" onSubmit={form.handleSubmit(onSubmit)} aria-label="Registrar transferencia">
       {/* Date */}
       <div className="grid gap-2">
         <Label htmlFor="date">Fecha</Label>
@@ -109,16 +110,16 @@ export default function IncomeForm(props: IncomeFormProps): React.ReactElement {
         )}
       </div>
 
-      {/* Account */}
+      {/* Source Account */}
       <div className="grid gap-2">
-        <Label>Cuenta</Label>
+        <Label>Cuenta Origen</Label>
         <Select
           value={form.watch("account_id")}
           onValueChange={(v) => form.setValue("account_id", v, { shouldValidate: true })}
           disabled={!hasAccounts}
         >
-          <SelectTrigger aria-label="Cuenta">
-            <SelectValue placeholder={hasAccounts ? "Selecciona una cuenta" : "No hay cuentas"} />
+          <SelectTrigger aria-label="Cuenta Origen">
+            <SelectValue placeholder={hasAccounts ? "Selecciona origen" : "No hay cuentas"} />
           </SelectTrigger>
           <SelectContent>
             {accounts.map((a) => (
@@ -128,11 +129,32 @@ export default function IncomeForm(props: IncomeFormProps): React.ReactElement {
             ))}
           </SelectContent>
         </Select>
-        {!hasAccounts && (
-          <p className="text-sm text-muted-foreground">Crea primero una cuenta en “Cuentas”.</p>
-        )}
         {form.formState.errors.account_id && (
           <p className="text-sm text-destructive">{form.formState.errors.account_id.message}</p>
+        )}
+      </div>
+
+      {/* Destination Account */}
+      <div className="grid gap-2">
+        <Label>Cuenta Destino</Label>
+        <Select
+          value={form.watch("destination_account_id")}
+          onValueChange={(v) => form.setValue("destination_account_id", v, { shouldValidate: true })}
+          disabled={!hasAccounts}
+        >
+          <SelectTrigger aria-label="Cuenta Destino">
+            <SelectValue placeholder={hasAccounts ? "Selecciona destino" : "No hay cuentas"} />
+          </SelectTrigger>
+          <SelectContent>
+            {accounts.map((a) => (
+              <SelectItem key={a.value} value={a.value}>
+                {a.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {form.formState.errors.destination_account_id && (
+          <p className="text-sm text-destructive">{form.formState.errors.destination_account_id.message}</p>
         )}
       </div>
 
@@ -187,33 +209,6 @@ export default function IncomeForm(props: IncomeFormProps): React.ReactElement {
         </div>
       )}
 
-      {/* Category */}
-      <div className="grid gap-2">
-        <Label>Categoría</Label>
-        <Select
-          value={form.watch("category_id")}
-          onValueChange={(v) => form.setValue("category_id", v, { shouldValidate: true })}
-          disabled={!hasCategories}
-        >
-          <SelectTrigger aria-label="Categoría">
-            <SelectValue placeholder={hasCategories ? "Selecciona una categoría" : "No hay categorías"} />
-          </SelectTrigger>
-          <SelectContent>
-            {categories.map((c) => (
-              <SelectItem key={c.value} value={c.value}>
-                {c.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {!hasCategories && (
-          <p className="text-sm text-muted-foreground">Aún no hay categorías disponibles.</p>
-        )}
-        {form.formState.errors.category_id && (
-          <p className="text-sm text-destructive">{form.formState.errors.category_id.message}</p>
-        )}
-      </div>
-
       {/* Note */}
       <div className="grid gap-2">
         <Label htmlFor="note">Nota</Label>
@@ -226,7 +221,7 @@ export default function IncomeForm(props: IncomeFormProps): React.ReactElement {
       {/* Actions */}
       <div className="flex justify-end gap-2">
         <Button type="submit" disabled={isPending || form.formState.isSubmitting}>
-          {isPending || form.formState.isSubmitting ? "Guardando..." : "Guardar ingreso"}
+          {isPending || form.formState.isSubmitting ? "Guardando..." : "Guardar transferencia"}
         </Button>
       </div>
     </form>

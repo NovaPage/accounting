@@ -7,6 +7,7 @@ import { Footer } from "@/components/layout/Footer";
 import { ToasterProvider } from "@/components/ui/ToasterProvider";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import NextTopLoader from "nextjs-toploader";
 
 export const metadata: Metadata = {
   title: "Orbit",
@@ -17,6 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased min-h-dvh bg-background text-foreground">
+        <NextTopLoader showSpinner={false} color="#2563eb" />
         <ThemeProvider>
           <QueryProvider>
             <NavBar />

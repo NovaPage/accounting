@@ -16,6 +16,10 @@ import { fetchAccounts } from "@/lib/queries/accounts";
 import AccountsView from "@/components/accounts/AccountsView";
 import SignOutButton from "@/components/auth/SignOutButton";
 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DashboardOverview } from "@/features/dashboard/components/DashboardOverview";
+import { fetchDashboardMetrics, fetchRecentTransactions } from "@/lib/queries/dashboard";
+
 export default async function DashboardPage(): Promise<JSX.Element> {
   // 1) Auth check (server-side)
   const supabase = await getServerComponentClient();
@@ -30,8 +34,17 @@ export default async function DashboardPage(): Promise<JSX.Element> {
   // 2) Ensure active space (returns string)
   const spaceId: string = await requireSpace();
 
-  // 3) Fetch initial data for the page on the server
-  const initialAccounts = await fetchAccounts(spaceId);
+  // 3) Fetch initial data for the page on the server (Parallel fetching)
+  const [initialAccounts, metrics, recentTransactions] = await Promise.all([
+    fetchAccounts(spaceId),
+    fetchDashboardMetrics(spaceId),
+    fetchRecentTransactions(spaceId),
+  ]);
+
+  const dashboardData = {
+    metrics,
+    recentTransactions,
+  };
 
   // 4) Render UI with a guaranteed space and initial data
   return (
@@ -46,9 +59,18 @@ export default async function DashboardPage(): Promise<JSX.Element> {
         <SignOutButton />
       </div>
 
-      {/* Client component responsible for all account interactions */}
-      <AccountsView spaceId={spaceId} initialAccounts={initialAccounts} />
-      
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview">Resumen</TabsTrigger>
+          <TabsTrigger value="accounts">Cuentas</TabsTrigger>
+        </TabsList>
+        <TabsContent value="overview" className="space-y-4">
+          <DashboardOverview data={dashboardData} />
+        </TabsContent>
+        <TabsContent value="accounts" className="space-y-4">
+          <AccountsView spaceId={spaceId} initialAccounts={initialAccounts} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

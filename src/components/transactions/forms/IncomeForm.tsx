@@ -1,13 +1,6 @@
 // File: src/components/transactions/forms/IncomeForm.tsx
 "use client";
 
-/**
- * IncomeForm (stub for Hito 1)
- * - Minimal fields + shallow validation (Zod).
- * - No persistence yet: simulates success and calls `onSubmitted`.
- * - Spanish UI; code/comments in English.
- */
-
 import * as React from "react";
 import { useTransition } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
@@ -20,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { upsertTransactionAction } from "@/app/actions/transactions";
 
 const CURRENCIES = ["COP", "USD", "EUR"] as const;
 export type CurrencyCode = (typeof CURRENCIES)[number];
@@ -29,7 +23,7 @@ export type IncomeFormProps = {
   spaceId: string;
   onSubmitted?: () => void;
   accounts?: SelectOption[];
-  categories?: SelectOption[]; // income categories
+  categories?: SelectOption[];
   defaultCurrency?: CurrencyCode;
 };
 
@@ -39,6 +33,7 @@ const IncomeSchema = z.object({
   amount: z.coerce.number().positive({ message: "Ingresa un monto mayor a 0." }),
   currency_code: z.enum(CURRENCIES, { message: "Selecciona una moneda." }),
   category_id: z.string().min(1, { message: "Selecciona una categoría." }),
+  payee: z.string().optional(),
   note: z
     .string()
     .max(140, { message: "Máximo 140 caracteres." })
@@ -52,13 +47,12 @@ type IncomeValues = z.output<typeof IncomeSchema>;
 
 export default function IncomeForm(props: IncomeFormProps): React.ReactElement {
   const {
-    spaceId: _spaceId,
+    spaceId,
     onSubmitted,
     accounts = [],
     categories = [],
     defaultCurrency = "COP",
   } = props;
-  void _spaceId;
 
   const [isPending, startTransition] = useTransition();
 
@@ -70,6 +64,7 @@ export default function IncomeForm(props: IncomeFormProps): React.ReactElement {
       amount: 0,
       currency_code: defaultCurrency,
       category_id: categories[0]?.value ?? "",
+      payee: "",
       note: "",
       fx_rate_to_space: 1,
     },
@@ -79,19 +74,28 @@ export default function IncomeForm(props: IncomeFormProps): React.ReactElement {
   const selectedCurrency = form.watch("currency_code");
   const showFx = selectedCurrency !== defaultCurrency;
 
-  const onSubmit: SubmitHandler<IncomeValues> = () => {
-    startTransition(() => {
-      toast.success("Ingreso simulado guardado.");
-      onSubmitted?.();
-      form.reset({
-        date: new Date().toISOString().slice(0, 10),
-        account_id: accounts[0]?.value ?? "",
-        amount: 0,
-        currency_code: defaultCurrency,
-        category_id: categories[0]?.value ?? "",
-        note: "",
-        fx_rate_to_space: 1,
+  const onSubmit: SubmitHandler<IncomeValues> = (values) => {
+    startTransition(async () => {
+      const res = await upsertTransactionAction({
+        spaceId,
+        type: "income",
+        date: values.date,
+        amount: values.amount,
+        currency_code: values.currency_code,
+        account_id: values.account_id,
+        category_id: values.category_id,
+        description: values.note,
+        payee: values.payee,
       });
+
+      if (!res.ok) {
+        toast.error(res.message);
+        return;
+      }
+
+      toast.success("Ingreso registrado.");
+      onSubmitted?.();
+      form.reset();
     });
   };
 
@@ -187,6 +191,19 @@ export default function IncomeForm(props: IncomeFormProps): React.ReactElement {
         </div>
       )}
 
+      {/* Payee (Source) */}
+      <div className="grid gap-2">
+        <Label htmlFor="payee">Origen (Opcional)</Label>
+        <Input
+          id="payee"
+          placeholder="Ej: Cliente X, Reembolso..."
+          {...form.register("payee")}
+        />
+        {form.formState.errors.payee && (
+          <p className="text-sm text-destructive">{form.formState.errors.payee.message}</p>
+        )}
+      </div>
+
       {/* Category */}
       <div className="grid gap-2">
         <Label>Categoría</Label>
@@ -207,7 +224,9 @@ export default function IncomeForm(props: IncomeFormProps): React.ReactElement {
           </SelectContent>
         </Select>
         {!hasCategories && (
-          <p className="text-sm text-muted-foreground">Aún no hay categorías disponibles.</p>
+          <p className="text-sm text-muted-foreground">
+            Aún no hay categorías. Se crean en el onboarding; revisa tu espacio.
+          </p>
         )}
         {form.formState.errors.category_id && (
           <p className="text-sm text-destructive">{form.formState.errors.category_id.message}</p>

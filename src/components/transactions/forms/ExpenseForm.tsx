@@ -1,13 +1,6 @@
 // File: src/components/transactions/forms/ExpenseForm.tsx
 "use client";
 
-/**
- * ExpenseForm (stub for Hito 1)
- * - Minimal fields + shallow validation (Zod).
- * - No persistence yet: simulates success and calls `onSubmitted`.
- * - Spanish UI; code/comments in English.
- */
-
 import * as React from "react";
 import { useTransition } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
@@ -20,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { upsertTransactionAction } from "@/app/actions/transactions";
 
 const CURRENCIES = ["COP", "USD", "EUR"] as const;
 export type CurrencyCode = (typeof CURRENCIES)[number];
@@ -39,6 +33,7 @@ const ExpenseSchema = z.object({
   amount: z.coerce.number().positive({ message: "Ingresa un monto mayor a 0." }),
   currency_code: z.enum(CURRENCIES, { message: "Selecciona una moneda." }),
   category_id: z.string().min(1, { message: "Selecciona una categoría." }),
+  payee: z.string().optional(),
   note: z
     .string()
     .max(140, { message: "Máximo 140 caracteres." })
@@ -47,20 +42,17 @@ const ExpenseSchema = z.object({
   fx_rate_to_space: z.coerce.number().positive({ message: "Ingresa una tasa válida (> 0)." }).default(1),
 });
 
-// IMPORTANT: split input vs output types to align with resolver generics
-type ExpenseInput = z.input<typeof ExpenseSchema>;   // before coercion (amount: unknown, etc.)
-type ExpenseValues = z.output<typeof ExpenseSchema>; // after coercion (amount: number, etc.)
+type ExpenseInput = z.input<typeof ExpenseSchema>;
+type ExpenseValues = z.output<typeof ExpenseSchema>;
 
 export default function ExpenseForm(props: ExpenseFormProps): React.ReactElement {
   const {
-    spaceId: _spaceId,
+    spaceId,
     onSubmitted,
     accounts = [],
     categories = [],
     defaultCurrency = "COP",
   } = props;
-  // Mark as intentionally unused to satisfy eslint without changing API
-  void _spaceId;
 
   const [isPending, startTransition] = useTransition();
 
@@ -69,9 +61,10 @@ export default function ExpenseForm(props: ExpenseFormProps): React.ReactElement
     defaultValues: {
       date: new Date().toISOString().slice(0, 10),
       account_id: accounts[0]?.value ?? "",
-      amount: 0, // OK: input type is unknown; number is assignable
+      amount: 0,
       currency_code: defaultCurrency,
       category_id: categories[0]?.value ?? "",
+      payee: "",
       note: "",
       fx_rate_to_space: 1,
     },
@@ -81,19 +74,28 @@ export default function ExpenseForm(props: ExpenseFormProps): React.ReactElement
   const selectedCurrency = form.watch("currency_code");
   const showFx = selectedCurrency !== defaultCurrency;
 
-  const onSubmit: SubmitHandler<ExpenseValues> = () => {
-    startTransition(() => {
-      toast.success("Gasto simulado guardado.");
-      onSubmitted?.();
-      form.reset({
-        date: new Date().toISOString().slice(0, 10),
-        account_id: accounts[0]?.value ?? "",
-        amount: 0,
-        currency_code: defaultCurrency,
-        category_id: categories[0]?.value ?? "",
-        note: "",
-        fx_rate_to_space: 1,
+  const onSubmit: SubmitHandler<ExpenseValues> = (values) => {
+    startTransition(async () => {
+      const res = await upsertTransactionAction({
+        spaceId,
+        type: "expense",
+        date: values.date,
+        amount: values.amount,
+        currency_code: values.currency_code,
+        account_id: values.account_id,
+        category_id: values.category_id,
+        description: values.note,
+        payee: values.payee,
       });
+
+      if (!res.ok) {
+        toast.error(res.message);
+        return;
+      }
+
+      toast.success("Gasto registrado.");
+      onSubmitted?.();
+      form.reset();
     });
   };
 
@@ -188,6 +190,19 @@ export default function ExpenseForm(props: ExpenseFormProps): React.ReactElement
           )}
         </div>
       )}
+
+      {/* Payee (Beneficiary) */}
+      <div className="grid gap-2">
+        <Label htmlFor="payee">Beneficiario (Opcional)</Label>
+        <Input
+          id="payee"
+          placeholder="Ej: Supermercado, Restaurante..."
+          {...form.register("payee")}
+        />
+        {form.formState.errors.payee && (
+          <p className="text-sm text-destructive">{form.formState.errors.payee.message}</p>
+        )}
+      </div>
 
       {/* Category */}
       <div className="grid gap-2">
