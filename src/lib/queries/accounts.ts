@@ -18,10 +18,7 @@ export type AccountBalanceRow = {
 // Tipos estructurales para llamar RPC sin any
 type GetBalancesArgs = { p_space_id: string; p_account_ids: string[] };
 type GetBalancesRow = { account_id: string; balance: number | string | null };
-type RpcCaller = (
-  fn: string,
-  args: GetBalancesArgs
-) => Promise<{ data: GetBalancesRow[] | null; error: { message?: string } | null }>;
+
 
 export async function fetchAccounts(spaceId: string): Promise<AccountBalanceRow[]> {
   const supabase = await getServerComponentClient();

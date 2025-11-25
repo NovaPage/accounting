@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RecentTransaction } from "../types";
 import { formatCurrency, formatDate } from "../utils";
@@ -43,8 +43,8 @@ export function DashboardRecentTransactions({ transactions }: Props) {
                             </div>
                             <div
                                 className={`ml-auto font-medium ${transaction.type === "income"
-                                        ? "text-emerald-600"
-                                        : "text-rose-600"
+                                    ? "text-emerald-600"
+                                    : "text-rose-600"
                                     }`}
                             >
                                 {transaction.type === "income" ? "+" : "-"}
