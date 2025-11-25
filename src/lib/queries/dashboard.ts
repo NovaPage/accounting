@@ -10,19 +10,22 @@ export async function fetchDashboardMetrics(spaceId: string): Promise<DashboardM
     try {
         const { data, error } = await supabase.rpc("get_dashboard_metrics", {
             p_space_id: spaceId,
-        });
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any);
 
         if (error) throw error;
 
         // Ensure default values if RPC returns null or partial data
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const d = data as any;
         return {
-            totalBalance: Number(data?.totalBalance ?? 0),
-            monthlyIncome: Number(data?.monthlyIncome ?? 0),
-            monthlyExpenses: Number(data?.monthlyExpenses ?? 0),
-            incomeChangePct: Number(data?.incomeChangePct ?? 0),
-            expensesChangePct: Number(data?.expensesChangePct ?? 0),
-            savingsRate: Number(data?.savingsRate ?? 0),
-            currencyCode: data?.currencyCode ?? "COP",
+            totalBalance: Number(d?.totalBalance ?? 0),
+            monthlyIncome: Number(d?.monthlyIncome ?? 0),
+            monthlyExpenses: Number(d?.monthlyExpenses ?? 0),
+            incomeChangePct: Number(d?.incomeChangePct ?? 0),
+            expensesChangePct: Number(d?.expensesChangePct ?? 0),
+            savingsRate: Number(d?.savingsRate ?? 0),
+            currencyCode: d?.currencyCode ?? "COP",
         };
     } catch (e) {
         logError("fetch_dashboard_metrics_failed", { feature: "dashboard", spaceId }, e);
@@ -31,6 +34,8 @@ export async function fetchDashboardMetrics(spaceId: string): Promise<DashboardM
             totalBalance: 0,
             monthlyIncome: 0,
             monthlyExpenses: 0,
+            incomeChangePct: 0,
+            expensesChangePct: 0,
             savingsRate: 0,
             currencyCode: "COP",
         };
@@ -55,7 +60,8 @@ export async function fetchRecentTransactions(spaceId: string): Promise<RecentTr
         // Ideally, we fetch the space currency or account currency.
         // For this MVP, we assume the space currency (or COP default).
 
-        return (data ?? []).map((t) => ({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return ((data as any[]) ?? []).map((t) => ({
             id: t.id,
             description: t.description ?? "Sin descripción",
             amount: Number(t.amount),
