@@ -16,7 +16,7 @@ export type AccountBalanceRow = {
 };
 
 // Tipos estructurales para llamar RPC sin any
-type GetBalancesArgs = { p_space_id: string; p_account_ids: string[] };
+
 type GetBalancesRow = { account_id: string; balance: number | string | null };
 
 
@@ -66,7 +66,8 @@ export async function fetchAccounts(spaceId: string): Promise<AccountBalanceRow[
       const { data: rpcRows, error: rpcErr } = await supabase.rpc("get_balances_for_accounts", {
         p_space_id: spaceId,
         p_account_ids: ids,
-      });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
       if (rpcErr) throw rpcErr;
 
       for (const r of (rpcRows as unknown as GetBalancesRow[]) ?? []) {
