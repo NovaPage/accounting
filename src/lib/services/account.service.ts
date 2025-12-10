@@ -58,11 +58,11 @@ export class AccountService extends BaseService {
             const balanceMap = new Map<string, number>();
 
             try {
-                const { data: rpcRows, error: rpcErr } = await supabase.rpc("get_balances_for_accounts", {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const { data: rpcRows, error: rpcErr } = await (supabase as any).rpc("get_balances_for_accounts", {
                     p_space_id: spaceId,
                     p_account_ids: ids,
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                } as any);
+                });
                 if (rpcErr) throw rpcErr;
 
                 for (const r of (rpcRows as unknown as GetBalancesRow[]) ?? []) {

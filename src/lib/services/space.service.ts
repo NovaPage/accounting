@@ -29,8 +29,8 @@ export class SpaceService extends BaseService {
 
         try {
             // Use the RPC if available (recommended for RLS recursion avoidance)
-            // @ts-expect-error - RPC might not be in generated types yet
-            const { data, error } = await supabase.rpc("get_user_spaces", { p_user_id: user.id });
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { data, error } = await (supabase as any).rpc("get_user_spaces", { p_user_id: user.id });
 
             if (error) throw error;
 
@@ -147,8 +147,8 @@ export class SpaceService extends BaseService {
         const supabase = await this.getClient();
 
         try {
-            // @ts-expect-error - RPC to be created by migration
-            const { error } = await supabase.rpc("invite_user_by_email", {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { error } = await (supabase as any).rpc("invite_user_by_email", {
                 p_space_id: spaceId,
                 p_email: email,
                 p_role: role

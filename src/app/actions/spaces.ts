@@ -42,7 +42,7 @@ export async function InviteMemberAction(email: string, spaceIdOverride?: string
         }
 
         return res;
-    } catch (e) {
+    } catch {
         return { ok: false, message: "Error inesperado al invitar." };
     }
 }
@@ -55,7 +55,7 @@ export async function UpdateSpaceAction(spaceId: string, name: string) {
         }
         revalidatePath("/dashboard/settings/space");
         return { ok: true, message: "Espacio actualizado." };
-    } catch (e) {
+    } catch {
         return { ok: false, message: "Error inesperado." };
     }
 }
