@@ -7,11 +7,11 @@ export class DashboardService extends BaseService {
         const supabase = await this.getClient();
 
         try {
-             
-            const { data, error } = await supabase.rpc("get_dashboard_metrics", {
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { data, error } = await (supabase as any).rpc("get_dashboard_metrics", {
                 p_space_id: spaceId,
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            } as any);
+            });
 
             if (error) throw error;
 
