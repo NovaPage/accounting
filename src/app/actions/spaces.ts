@@ -19,7 +19,7 @@ export async function CreateSpaceAction(name: string, currencyCode: string) {
 
         revalidatePath("/");
         return { ok: true, message: "Espacio creado." };
-    } catch (e) {
+    } catch {
         return { ok: false, message: "Error inesperado." };
     }
 }
@@ -68,7 +68,7 @@ export async function RemoveMemberAction(spaceId: string, userId: string) {
         }
         revalidatePath("/dashboard/settings/space/members");
         return { ok: true, message: "Miembro eliminado." };
-    } catch (e) {
+    } catch {
         return { ok: false, message: "Error inesperado." };
     }
 }

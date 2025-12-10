@@ -65,8 +65,9 @@ export async function ensureOnboarded(
     p_currency_code: currency,
   };
 
-  // @ts-expect-error - RPC not generated in types yet
-  const rpcResponse = await supabase.rpc(
+  // Cast to any to bypass missing RPC definition in generated types
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rpcResponse = await (supabase as any).rpc(
     "onboard_first_login",
     (rpcArgs as unknown) as undefined,
   );

@@ -31,9 +31,9 @@ export async function GetReportsDataAction(): Promise<{ data?: ChartData; error?
 
         // Process Income vs Expense
         const monthlyData = new Map<string, { ingreso: number; gasto: number }>();
-        const balanceData: { date: string; balance: number }[] = [];
+        // const balanceData: { date: string; balance: number }[] = [];
 
-        let runningBalance = 0;
+        // let runningBalance = 0;
         // Note: For accurate balance history we'd normally need a starting balance snapshot.
         // For this MVP, we will calculate relative movement or try to fetch current account balances?
         // Let's just sum transactions for the graph interval relative to 0 for "Movement" or fetch accounts for Total.
@@ -58,8 +58,8 @@ export async function GetReportsDataAction(): Promise<{ data?: ChartData; error?
             if (tx.type === "expense") entry.gasto += tx.amount;
 
             // For balance line: accumulate
-            if (tx.type === "income") runningBalance += tx.amount;
-            if (tx.type === "expense") runningBalance -= tx.amount;
+            // if (tx.type === "income") runningBalance += tx.amount;
+            // if (tx.type === "expense") runningBalance -= tx.amount;
             // Transfers sum to 0 usually in double entry, or handled as in/out. 
             // Logic in transactions.ts suggests transfers are dual records? 
             // If so, fetching all transactions sums correctly.
