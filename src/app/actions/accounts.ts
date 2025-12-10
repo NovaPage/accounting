@@ -138,7 +138,7 @@ export async function upsertAccountAction(
       type: values.type,
       currency_code: values.currency_code,
       allow_negative: values.allow_negative,
-      // opening_balance stays untouched on updates for Hito 1
+      opening_balance: values.opening_balance,
     };
 
     const { error: upErr } = await supabase

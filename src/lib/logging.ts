@@ -20,7 +20,8 @@ function log(level: LogLevel, message: string, ctx?: LogContext, extra?: unknown
     level,
     message,
     ctx: ctx ?? {},
-    extra: extra ?? null,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    extra: extra instanceof Error ? { message: extra.message, stack: extra.stack, ...(extra as any) } : (extra ?? null),
     at: new Date().toISOString(),
   };
 
