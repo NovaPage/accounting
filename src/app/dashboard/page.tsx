@@ -19,6 +19,7 @@ import SignOutButton from "@/components/auth/SignOutButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DashboardOverview } from "@/features/dashboard/components/DashboardOverview";
 import { fetchDashboardMetrics, fetchRecentTransactions } from "@/lib/queries/dashboard";
+import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 
 export default async function DashboardPage(): Promise<JSX.Element> {
   // 1) Auth check (server-side)
@@ -64,7 +65,9 @@ export default async function DashboardPage(): Promise<JSX.Element> {
           <TabsTrigger value="overview">Resumen</TabsTrigger>
           <TabsTrigger value="accounts">Cuentas</TabsTrigger>
         </TabsList>
+
         <TabsContent value="overview" className="space-y-4">
+          <DashboardCharts />
           <DashboardOverview data={dashboardData} />
         </TabsContent>
         <TabsContent value="accounts" className="space-y-4">

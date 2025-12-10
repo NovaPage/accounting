@@ -1,77 +1,14 @@
 "use server";
 
-import { getServerComponentClient } from "@/lib/supabase/server";
+import { DashboardService } from "@/lib/services/dashboard.service";
 import { DashboardMetrics, RecentTransaction } from "@/features/dashboard/types";
-import { logError } from "@/lib/logging";
+
+const dashboardService = new DashboardService();
 
 export async function fetchDashboardMetrics(spaceId: string): Promise<DashboardMetrics> {
-    const supabase = await getServerComponentClient();
-
-    try {
-        const { data, error } = await supabase.rpc("get_dashboard_metrics", {
-            p_space_id: spaceId,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any);
-
-        if (error) throw error;
-
-        // Ensure default values if RPC returns null or partial data
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const d = data as any;
-        return {
-            totalBalance: Number(d?.totalBalance ?? 0),
-            monthlyIncome: Number(d?.monthlyIncome ?? 0),
-            monthlyExpenses: Number(d?.monthlyExpenses ?? 0),
-            incomeChangePct: Number(d?.incomeChangePct ?? 0),
-            expensesChangePct: Number(d?.expensesChangePct ?? 0),
-            savingsRate: Number(d?.savingsRate ?? 0),
-            currencyCode: d?.currencyCode ?? "COP",
-        };
-    } catch (e) {
-        logError("fetch_dashboard_metrics_failed", { feature: "dashboard", spaceId }, e);
-        // Fallback to zeros on error
-        return {
-            totalBalance: 0,
-            monthlyIncome: 0,
-            monthlyExpenses: 0,
-            incomeChangePct: 0,
-            expensesChangePct: 0,
-            savingsRate: 0,
-            currencyCode: "COP",
-        };
-    }
+    return dashboardService.fetchDashboardMetrics(spaceId);
 }
 
 export async function fetchRecentTransactions(spaceId: string): Promise<RecentTransaction[]> {
-    const supabase = await getServerComponentClient();
-
-    try {
-        const { data, error } = await supabase
-            .from("transactions")
-            .select("*")
-            .eq("space_id", spaceId)
-            .order("date", { ascending: false })
-            .limit(5);
-
-        if (error) throw error;
-
-        // Map DB rows to UI type
-        // Note: We are using a hardcoded currency for now as it's not on the transaction row usually
-        // Ideally, we fetch the space currency or account currency.
-        // For this MVP, we assume the space currency (or COP default).
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return ((data as any[]) ?? []).map((t) => ({
-            id: t.id,
-            description: t.description ?? "Sin descripción",
-            amount: Number(t.amount),
-            date: t.date,
-            category: "General", // Placeholder until we join with categories
-            type: t.type as "income" | "expense",
-            currencyCode: "COP", // TODO: Fetch from account or space
-        }));
-    } catch (e) {
-        logError("fetch_recent_transactions_failed", { feature: "dashboard", spaceId }, e);
-        return [];
-    }
+    return dashboardService.fetchRecentTransactions(spaceId);
 }

@@ -10,29 +10,21 @@
 import Link from "next/link";
 import { ThemeToggle } from "./ThemeToggle"; // client component is fine inside server
 import SpaceSwitcher from "./SpaceSwitcher";
+import { NavMobile } from "./NavMobile";
 import GlobalAdd from "@/components/transactions/GlobalAdd";
 import { getActiveSpace } from "@/lib/space";
 import { getServerComponentClient } from "@/lib/supabase/server";
+import { NavTabs } from "./NavTabs";
+import { Notifications } from "./Notifications";
+import { UserNav } from "./UserNav";
 
 export async function NavBar() {
   const supabase = await getServerComponentClient();
   const { data: { user } } = await supabase.auth.getUser();
 
+  // If not authenticated, do not render the App Navbar (Landing Page handles its own header if needed, or no header)
   if (!user) {
-    return (
-      <header className="w-full border-b">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
-          <Link href="/" className="font-semibold">
-            Orbit
-          </Link>
-
-          <nav className="flex items-center gap-3 text-sm">
-            <Link href="/login">Iniciar Sesión</Link>
-            <ThemeToggle />
-          </nav>
-        </div>
-      </header>
-    );
+    return null;
   }
 
   // Only fetch space if user is authenticated
@@ -40,43 +32,44 @@ export async function NavBar() {
   try {
     space = await getActiveSpace();
   } catch (e) {
-    // Fallback if space fetch fails (e.g. during onboarding edge cases)
     console.error("NavBar space fetch error:", e);
-    return (
-      <header className="w-full border-b">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
-          <Link href="/" className="font-semibold">
-            Orbit
-          </Link>
-          <nav className="flex items-center gap-3 text-sm">
-            <ThemeToggle />
-          </nav>
-        </div>
-      </header>
-    )
   }
 
   return (
-    <header className="w-full border-b">
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
-        <Link href="/" className="font-semibold">
-          Orbit
-        </Link>
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 gap-4">
 
-        <nav className="flex items-center gap-3 text-sm">
-          <Link href="/dashboard">Dashboard</Link>
-          <Link href="/forms">Forms</Link>
-          <Link href="/theme">Theme</Link>
+        {/* Left: Logo & Tabs */}
+        <div className="flex items-center gap-8">
+          <Link href="/dashboard" className="font-bold text-lg tracking-tight">
+            Orbit
+          </Link>
+          <div className="hidden md:block">
+            <NavTabs />
+          </div>
+        </div>
 
-          {/* Right-side controls */}
-          {/* Space switcher (Server) for SSR fetch + server action */}
-          <SpaceSwitcher />
+        {/* Right: Actions & Mobile Menu */}
+        <div className="flex items-center gap-2">
+          {/* Work in Space */}
+          <div className="flex items-center gap-2 mr-2">
+            <div className="hidden sm:block">
+              <SpaceSwitcher />
+            </div>
+            <GlobalAdd space={space || null} />
+          </div>
 
-          <GlobalAdd space={space} />
+          <div className="hidden sm:flex items-center gap-1">
+            <div className="h-4 w-px bg-border mx-2" />
+            <ThemeToggle />
+            <Notifications />
+            <UserNav />
+          </div>
 
-          {/* Theme toggle (Client) */}
-          <ThemeToggle />
-        </nav>
+          <div className="md:hidden">
+            <NavMobile />
+          </div>
+        </div>
       </div>
     </header>
   );

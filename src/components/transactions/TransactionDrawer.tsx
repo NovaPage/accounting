@@ -36,14 +36,20 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { logInfo } from "@/lib/logging";
 import { track } from "@/lib/telemetry";
 import { fetchDrawerData, type DrawerData } from "@/app/actions/data";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 export type TransactionType = "expense" | "income" | "transfer";
-
-
 
 /** Simple skeleton shown while loading a form lazily. */
 function FormSkeleton(): React.ReactElement {
@@ -78,6 +84,8 @@ export default function TransactionDrawer(props: Props): React.ReactElement {
   const [data, setData] = useState<DrawerData>({ accounts: [], categories: [] });
   const [loading, setLoading] = useState(false);
 
+  const isDesktop = useMediaQuery("(min-width: 768px)");
+
   // Reset tab on open
   useEffect(() => {
     if (open) setTab(defaultType);
@@ -105,7 +113,75 @@ export default function TransactionDrawer(props: Props): React.ReactElement {
     [onOpenChange, onSubmitted],
   );
 
+  const DrawerContent = (
+    <div className="mt-4 px-4 pb-8">
+      <Tabs value={tab} onValueChange={(v) => setTab(v as TransactionType)} className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="expense">Gasto</TabsTrigger>
+          <TabsTrigger value="income">Ingreso</TabsTrigger>
+          <TabsTrigger value="transfer">Transf.</TabsTrigger>
+        </TabsList>
+
+        <Separator className="my-4" />
+
+        {loading ? (
+          <FormSkeleton />
+        ) : (
+          <>
+            <TabsContent value="expense" className="mt-0">
+              <Suspense fallback={<FormSkeleton />}>
+                <ExpenseForm
+                  spaceId={spaceId}
+                  onSubmitted={handleSubmitted}
+                  accounts={data.accounts}
+                  categories={data.categories}
+                />
+              </Suspense>
+            </TabsContent>
+
+            <TabsContent value="income" className="mt-0">
+              <Suspense fallback={<FormSkeleton />}>
+                <IncomeForm
+                  spaceId={spaceId}
+                  onSubmitted={handleSubmitted}
+                  accounts={data.accounts}
+                  categories={data.categories}
+                />
+              </Suspense>
+            </TabsContent>
+
+            <TabsContent value="transfer" className="mt-0">
+              <Suspense fallback={<FormSkeleton />}>
+                <TransferForm
+                  spaceId={spaceId}
+                  onSubmitted={handleSubmitted}
+                  accounts={data.accounts}
+                />
+              </Suspense>
+            </TabsContent>
+          </>
+        )}
+      </Tabs>
+    </div>
+  );
+
   if (!spaceId) return <></>;
+
+  if (isDesktop) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Agregar transacción</DialogTitle>
+            <DialogDescription>
+              Registra un gasto, ingreso o transferencia en tu espacio actual.
+            </DialogDescription>
+          </DialogHeader>
+          {DrawerContent}
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -116,56 +192,7 @@ export default function TransactionDrawer(props: Props): React.ReactElement {
             Registra un gasto, ingreso o transferencia en tu espacio actual.
           </SheetDescription>
         </SheetHeader>
-
-        <div className="mt-4">
-          <Tabs value={tab} onValueChange={(v) => setTab(v as TransactionType)} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="expense">Gasto</TabsTrigger>
-              <TabsTrigger value="income">Ingreso</TabsTrigger>
-              <TabsTrigger value="transfer">Transferencia</TabsTrigger>
-            </TabsList>
-
-            <Separator className="my-4" />
-
-            {loading ? (
-              <FormSkeleton />
-            ) : (
-              <>
-                <TabsContent value="expense" className="mt-0">
-                  <Suspense fallback={<FormSkeleton />}>
-                    <ExpenseForm
-                      spaceId={spaceId}
-                      onSubmitted={handleSubmitted}
-                      accounts={data.accounts}
-                      categories={data.categories}
-                    />
-                  </Suspense>
-                </TabsContent>
-
-                <TabsContent value="income" className="mt-0">
-                  <Suspense fallback={<FormSkeleton />}>
-                    <IncomeForm
-                      spaceId={spaceId}
-                      onSubmitted={handleSubmitted}
-                      accounts={data.accounts}
-                      categories={data.categories}
-                    />
-                  </Suspense>
-                </TabsContent>
-
-                <TabsContent value="transfer" className="mt-0">
-                  <Suspense fallback={<FormSkeleton />}>
-                    <TransferForm
-                      spaceId={spaceId}
-                      onSubmitted={handleSubmitted}
-                      accounts={data.accounts}
-                    />
-                  </Suspense>
-                </TabsContent>
-              </>
-            )}
-          </Tabs>
-        </div>
+        {DrawerContent}
       </SheetContent>
     </Sheet>
   );

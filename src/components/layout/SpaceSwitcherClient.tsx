@@ -1,14 +1,6 @@
 // File: src/components/layout/SpaceSwitcherClient.tsx
 "use client";
 
-/**
- * SpaceSwitcher (Client)
- * - Receives the pre-fetched spaces and the Server Action to change the active space.
- * - Renders a dropdown to switch spaces and triggers a refresh after selection.
- *
- * UI strings are in Spanish; code and comments are in English.
- */
-
 import { useMemo, useTransition, type JSX } from "react";
 import { useRouter } from "next/navigation";
 
@@ -24,7 +16,10 @@ import {
 import { Button } from "@/components/ui/button";
 
 // Icons
-import { ChevronDown, Check } from "lucide-react";
+import { ChevronDown, Check, PlusCircle } from "lucide-react";
+
+// Components
+import CreateSpaceDialog from "@/components/spaces/CreateSpaceDialog";
 
 type UISpace = {
   id: string;
@@ -65,16 +60,6 @@ export default function SpaceSwitcherClient({
     return spaces.find((s) => s.id === activeId) ?? spaces[0];
   }, [spaces, activeId]);
 
-  // If there is only 1 space, render a simple non-interactive button
-  if (spaces.length === 1) {
-    return (
-      <Button variant="outline" className="h-9 gap-2" disabled>
-        {spaceLabel(active)}
-      </Button>
-    );
-  }
-
-  // For 2+ spaces, render a dropdown switcher
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -128,6 +113,19 @@ export default function SpaceSwitcherClient({
             </DropdownMenuItem>
           );
         })}
+
+        <DropdownMenuSeparator />
+
+        <CreateSpaceDialog>
+          <DropdownMenuItem
+            onSelect={(e) => e.preventDefault()}
+            className="flex cursor-pointer items-center gap-2 text-primary focus:text-primary"
+          >
+            <PlusCircle className="h-4 w-4" />
+            <span>Crear nuevo espacio</span>
+          </DropdownMenuItem>
+        </CreateSpaceDialog>
+
       </DropdownMenuContent>
     </DropdownMenu>
   );
