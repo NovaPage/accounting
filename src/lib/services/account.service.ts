@@ -7,7 +7,8 @@ export type AccountBalanceRow = {
     account_name: string;
     type: "cash" | "bank" | "card" | "other";
     currency_code: string;
-    balance: number;
+    opening_balance: number; // Raw opening balance from DB
+    balance: number; // Calculated total balance (opening + transactions)
     is_archived?: boolean | null;
     order_index?: number | null;
     space_id?: string;
@@ -29,7 +30,7 @@ export class AccountService extends BaseService {
             // 1) Fetch accounts metadata
             const { data: accounts, error: accErr } = await supabase
                 .from("accounts")
-                .select("id, name, type, currency_code, is_archived, order_index")
+                .select("id, name, type, currency_code, opening_balance, is_archived, order_index")
                 .eq("space_id", spaceId)
                 .order("order_index", { ascending: true })
                 .order("name", { ascending: true });
@@ -37,15 +38,17 @@ export class AccountService extends BaseService {
             if (accErr) throw accErr;
 
             const moneySet = new Set<string>(MONEY_ACCOUNT_TYPES as readonly string[]);
-            const activeMoney = (accounts ?? []).filter((a) => {
-                const t = (a as { type: string }).type;
-                const archived = (a as { is_archived: boolean | null }).is_archived ?? false;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const activeMoney = ((accounts as any[]) ?? []).filter((a) => {
+                const t = a.type;
+                const archived = a.is_archived ?? false;
                 return moneySet.has(t) && !archived;
             }) as Array<{
                 id: string;
                 name: string;
                 type: "cash" | "bank" | "card" | "other" | string;
                 currency_code: string;
+                opening_balance: number;
                 is_archived: boolean | null;
                 order_index: number | null;
             }>;
@@ -80,6 +83,7 @@ export class AccountService extends BaseService {
                 account_name: a.name,
                 type: (moneySet.has(a.type) ? (a.type as "cash" | "bank" | "card") : "other"),
                 currency_code: a.currency_code,
+                opening_balance: (a as { opening_balance?: number }).opening_balance ?? 0,
                 balance: balanceMap.get(a.id) ?? 0,
                 is_archived: a.is_archived ?? null,
                 order_index: a.order_index ?? null,

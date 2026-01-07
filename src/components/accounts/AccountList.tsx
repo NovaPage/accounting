@@ -27,20 +27,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { MONEY_ACCOUNT_TYPES } from "@/lib/constants";
+import { type AccountBalanceRow } from "@/lib/services/account.service";
+
+export { type AccountBalanceRow };
 
 type MoneyAccountType = "cash" | "bank" | "card";
 type AnyAccountType = MoneyAccountType | "other";
-
-export type AccountBalanceRow = {
-  account_id: string;
-  account_name: string;
-  type: AnyAccountType;
-  currency_code: string;
-  balance: number;
-  is_archived?: boolean | null;
-  order_index?: number | null;
-  space_id?: string;
-};
 
 type Props = {
   /** Id de espacio activo (SSR). */

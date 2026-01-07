@@ -27,18 +27,10 @@ import AccountForm, {
   type AccountUpsertResult,
 } from "./AccountForm";
 import AccountList from "./AccountList";
+import { type AccountBalanceRow } from "@/lib/services/account.service";
 
-// Mínimo shape desde v_account_balances (ideal: centralizar en types/)
-type AccountBalanceRow = {
-  account_id: string;
-  account_name: string;
-  type: "cash" | "bank" | "card" | "other";
-  currency_code: "COP" | "USD" | "EUR" | string;
-  balance: number;
-  is_archived?: boolean | null;
-  order_index?: number | null;
-  space_id?: string;
-};
+// Use imported type
+
 
 type Props = {
   spaceId: string;
@@ -84,15 +76,14 @@ export default function AccountsView({ spaceId, initialAccounts }: Props) {
   // Valores iniciales del formulario cuando se edita
   const formInitialValues: Partial<AccountFormValues> | undefined = editingAccount
     ? {
-        id: editingAccount.account_id,
-        name: editingAccount.account_name,
-        type: editingAccount.type,
-        currency_code: (editingAccount.currency_code as "COP" | "USD" | "EUR") ?? "COP",
-        // Nota: aquí usamos el balance actual; si necesitas el opening_balance real,
-        // léelo de `accounts` en lugar de la vista de balances.
-        opening_balance: editingAccount.balance,
-        allow_negative: false,
-      }
+      id: editingAccount.account_id,
+      name: editingAccount.account_name,
+      type: editingAccount.type,
+      currency_code: (editingAccount.currency_code as "COP" | "USD" | "EUR") ?? "COP",
+      // Fix: Use the real opening balance from the DB, not the calculated total balance
+      opening_balance: editingAccount.opening_balance,
+      allow_negative: false,
+    }
     : undefined;
 
   // Adaptador: el form entrega AccountUpsertInput (sin spaceId),
