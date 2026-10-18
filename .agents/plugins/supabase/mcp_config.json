@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "supabase": {
+      "serverUrl": "http://supabase-auth.novapage.com.co/mcp?features=docs%2Cdatabase%2Cdebugging%2Cdevelopment"
+    }
+  }
+}

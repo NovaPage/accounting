@@ -179,4 +179,5 @@ export interface Database {
       [_ in never]: never
     }
   }
+  accounting: Database["public"]
 }

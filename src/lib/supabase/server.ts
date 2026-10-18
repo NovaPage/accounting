@@ -22,6 +22,9 @@ export async function getServerComponentClient(): Promise<SupabaseClient<Databas
     publicEnv.supabaseUrl,
     publicEnv.supabaseAnonKey,
     {
+      db: {
+        schema: publicEnv.supabaseSchema as "public",
+      },
       cookies: {
         getAll() {
           // Map Next cookies -> { name, value }[]
@@ -47,6 +50,9 @@ export async function getRouteHandlerClient(): Promise<SupabaseClient<Database>>
     publicEnv.supabaseUrl,
     publicEnv.supabaseAnonKey,
     {
+      db: {
+        schema: publicEnv.supabaseSchema as "public",
+      },
       cookies: {
         getAll() {
           return store.getAll().map((c) => ({ name: c.name, value: c.value }));
@@ -69,6 +75,9 @@ export async function getRouteHandlerClient(): Promise<SupabaseClient<Database>>
  */
 export function getServerStaticClient(): SupabaseClient<Database> {
   return createSupabaseClient<Database>(publicEnv.supabaseUrl, publicEnv.supabaseAnonKey, {
+    db: {
+      schema: publicEnv.supabaseSchema as "public",
+    },
     auth: {
       persistSession: false,
       autoRefreshToken: false,

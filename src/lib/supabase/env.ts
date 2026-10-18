@@ -9,16 +9,21 @@
 export type PublicEnv = {
   supabaseUrl: string;
   supabaseAnonKey: string; // aka "publishable" key
+  supabaseSchema: string;
 };
 
 function readPublicEnv(): PublicEnv {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+  const supabaseAnonKey =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+    "";
+  const supabaseSchema = process.env.NEXT_PUBLIC_SUPABASE_SCHEMA || "accounting";
 
   if (!supabaseUrl) throw new Error("Missing env: NEXT_PUBLIC_SUPABASE_URL");
   if (!supabaseAnonKey) throw new Error("Missing env: NEXT_PUBLIC_SUPABASE_ANON_KEY");
 
-  return { supabaseUrl, supabaseAnonKey };
+  return { supabaseUrl, supabaseAnonKey, supabaseSchema };
 }
 
 export const publicEnv: Readonly<PublicEnv> = readPublicEnv();

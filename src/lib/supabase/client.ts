@@ -14,7 +14,12 @@ export function getBrowserClient(): SupabaseClient<Database> {
   if (!browserClient) {
     browserClient = createBrowserClient<Database>(
       publicEnv.supabaseUrl,
-      publicEnv.supabaseAnonKey
+      publicEnv.supabaseAnonKey,
+      {
+        db: {
+          schema: publicEnv.supabaseSchema as "public",
+        },
+      }
     );
   }
   return browserClient;
