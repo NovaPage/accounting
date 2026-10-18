@@ -6,7 +6,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 
 // UI Components
 import {
@@ -46,7 +45,6 @@ export default function CreateSpaceDialog({
 }) {
     const [open, setOpen] = useState(false);
     const [isPending, startTransition] = useTransition();
-    const router = useRouter();
 
     const form = useForm<FormValues>({
         resolver: zodResolver(Schema),

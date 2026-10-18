@@ -98,19 +98,32 @@ export class SpaceService extends BaseService {
         const supabase = await this.getClient();
 
         try {
-            const { data, error } = await supabase
-                .from("space_members")
-                .select("user_id, role, joined_at")
-                .eq("space_id", spaceId);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { data, error } = await (supabase as any).rpc("get_space_members", {
+                p_space_id: spaceId
+            });
 
-            if (error) throw error;
+            if (error) {
+                // Fallback to direct table select if RPC has issues
+                const { data: fallbackData, error: fallbackError } = await supabase
+                    .from("space_members")
+                    .select("user_id, role, joined_at")
+                    .eq("space_id", spaceId);
 
-            // Note: To get emails, we usually need a secure RPC or a view that joins with auth.users
-            // For now, returning IDs and roles.
-            return data.map(m => ({
+                if (fallbackError) throw fallbackError;
+                return fallbackData.map(m => ({
+                    user_id: m.user_id,
+                    role: m.role as "owner" | "member",
+                    joined_at: m.joined_at
+                }));
+            }
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            return (data as any[]).map(m => ({
                 user_id: m.user_id,
                 role: m.role as "owner" | "member",
-                joined_at: m.joined_at
+                joined_at: m.joined_at,
+                email: m.email || undefined
             }));
         } catch (e) {
             logError("get_space_members_failed", { feature: "spaces", spaceId }, e);
@@ -161,18 +174,21 @@ export class SpaceService extends BaseService {
 
         try {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const { error } = await (supabase as any).rpc("invite_user_by_email", {
+            const { data, error } = await (supabase as any).rpc("invite_user_by_email", {
                 p_space_id: spaceId,
-                p_email: email,
+                p_email: email.trim().toLowerCase(),
                 p_role: role
             });
 
-            if (error) throw error;
+            if (error) {
+                return { ok: false, message: error.message || "Error al invitar al usuario." };
+            }
 
-            return { ok: true, message: "Usuario invitado correctamente." };
+            return { ok: true, message: typeof data === "string" ? data : "Usuario invitado correctamente." };
         } catch (e) {
             logError("invite_member_failed", { feature: "spaces", spaceId }, e);
-            return { ok: false, message: "No se pudo invitar al usuario. Verifica que el correo esté registrado." };
+            const msg = e instanceof Error ? e.message : "No se pudo invitar al usuario.";
+            return { ok: false, message: msg };
         }
     }
 }

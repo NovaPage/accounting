@@ -110,4 +110,37 @@ test.describe('Flujos de Usuario: Espacios y Agregar Transacción', () => {
     await expect(page.getByRole('menuitem', { name: uniqueName })).toBeVisible();
     await expect(page.getByRole('menuitem', { name: /Personal/i })).toBeVisible();
   });
+
+  test('Invitar a un miembro por email lo agrega a la lista de miembros', async ({ page }) => {
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(500);
+
+    // 1. Navegar a Espacio -> Miembros
+    await page.goto('/dashboard/settings/space/members');
+    await expect(page.getByText('Gestión de Miembros')).toBeVisible({ timeout: 10000 });
+
+    // El usuario actual debe figurar como Propietario / "Tú"
+    await expect(page.getByText('Tú')).toBeVisible();
+    await expect(page.getByText('Propietario').first()).toBeVisible();
+
+    // 2. Abrir diálogo de invitar
+    const inviteBtn = page.getByRole('button', { name: /Invitar/i });
+    await expect(inviteBtn).toBeVisible();
+    await inviteBtn.click();
+
+    // Diálogo debe estar visible
+    await expect(page.getByText('Invitar miembro')).toBeVisible({ timeout: 5000 });
+
+    // 3. Introducir correo registrado (ej: admin@novapage.com.co)
+    const emailInput = page.getByLabel('Email');
+    await emailInput.fill('admin@novapage.com.co');
+
+    // 4. Enviar invitación
+    await page.getByRole('button', { name: /Enviar invitación/i }).click();
+
+    // 5. Verificar que admin@novapage.com.co ahora aparece en la lista de miembros
+    await expect(page.getByText('admin@novapage.com.co')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('Miembro').first()).toBeVisible();
+  });
 });
+
