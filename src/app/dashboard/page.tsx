@@ -14,7 +14,6 @@ import { getServerComponentClient } from "@/lib/supabase/server";
 import { requireSpace } from "./guards/requireSpace";
 import { fetchAccounts } from "@/lib/queries/accounts";
 import AccountsView from "@/components/accounts/AccountsView";
-import SignOutButton from "@/components/auth/SignOutButton";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DashboardOverview } from "@/features/dashboard/components/DashboardOverview";
@@ -49,15 +48,14 @@ export default async function DashboardPage(): Promise<JSX.Element> {
 
   // 4) Render UI with a guaranteed space and initial data
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-3 sm:p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Panel</h1>
-          <p className="text-sm text-muted-foreground">
-            Bienvenido, {email}.
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Panel</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">
+            Bienvenido, <span className="font-medium text-foreground">{email}</span>.
           </p>
         </div>
-        <SignOutButton />
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">

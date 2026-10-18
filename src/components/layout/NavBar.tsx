@@ -10,13 +10,13 @@
 import Link from "next/link";
 import { ThemeToggle } from "./ThemeToggle"; // client component is fine inside server
 import SpaceSwitcher from "./SpaceSwitcher";
-import { NavMobile } from "./NavMobile";
 import GlobalAdd from "@/components/transactions/GlobalAdd";
 import { getActiveSpace } from "@/lib/space";
 import { getServerComponentClient } from "@/lib/supabase/server";
 import { NavTabs } from "./NavTabs";
 import { Notifications } from "./Notifications";
 import { UserNav } from "./UserNav";
+import { MobileBottomNav } from "./MobileBottomNav";
 
 export async function NavBar() {
   const supabase = await getServerComponentClient();
@@ -36,41 +36,46 @@ export async function NavBar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 gap-4">
+    <>
+      <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 gap-4">
 
-        {/* Left: Logo & Tabs */}
-        <div className="flex items-center gap-8">
-          <Link href="/dashboard" className="font-bold text-lg tracking-tight">
-            Orbit
-          </Link>
-          <div className="hidden md:block">
-            <NavTabs />
-          </div>
-        </div>
-
-        {/* Right: Actions & Mobile Menu */}
-        <div className="flex items-center gap-2">
-          {/* Work in Space */}
-          <div className="flex items-center gap-2 mr-2">
-            <div className="hidden sm:block">
+          {/* Left: Logo & Space Switcher & Desktop Tabs */}
+          <div className="flex items-center gap-3 sm:gap-6">
+            <Link href="/dashboard" className="font-bold text-lg tracking-tight hover:opacity-90 transition-opacity">
+              Orbit
+            </Link>
+            
+            {/* Space Switcher always accessible on mobile and desktop */}
+            <div className="flex items-center">
               <SpaceSwitcher />
             </div>
-            <GlobalAdd space={space || null} />
+
+            <div className="hidden md:block">
+              <NavTabs />
+            </div>
           </div>
 
-          <div className="hidden sm:flex items-center gap-1">
-            <div className="h-4 w-px bg-border mx-2" />
-            <ThemeToggle />
-            <Notifications />
-            <UserNav />
-          </div>
+          {/* Right: Actions (Desktop GlobalAdd + Controls) & Mobile Controls */}
+          <div className="flex items-center gap-2">
+            {/* Desktop Add Button */}
+            <div className="hidden md:flex items-center gap-2 mr-1">
+              <GlobalAdd space={space || null} />
+            </div>
 
-          <div className="md:hidden">
-            <NavMobile />
+            <div className="flex items-center gap-1">
+              <ThemeToggle />
+              <div className="hidden sm:block">
+                <Notifications />
+              </div>
+              <UserNav />
+            </div>
           </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      {/* Standard Mobile Bottom Navigation Bar with Action Center */}
+      <MobileBottomNav space={space || null} />
+    </>
   );
 }

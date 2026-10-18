@@ -22,7 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           <QueryProvider>
             <NavBar />
-            <main className="mx-auto max-w-7xl px-4 py-6">
+            <main className="mx-auto max-w-7xl px-4 py-6 pb-24 md:pb-6">
               {children}
             </main>
             <Footer />
