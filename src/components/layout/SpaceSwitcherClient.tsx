@@ -2,7 +2,6 @@
 "use client";
 
 import { useMemo, useTransition, type JSX } from "react";
-import { useRouter } from "next/navigation";
 
 // shadcn/ui primitives
 import {
@@ -52,7 +51,6 @@ export default function SpaceSwitcherClient({
   activeId,
   changeSpace,
 }: ClientProps): JSX.Element {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   // Derive active space object; fallback to the first one
@@ -89,8 +87,7 @@ export default function SpaceSwitcherClient({
 
             startTransition(async () => {
               await changeSpace(fd);
-              // Client-side refresh to ensure reactive hooks/components update instantly
-              router.refresh();
+              window.location.assign("/dashboard");
             });
           };
 

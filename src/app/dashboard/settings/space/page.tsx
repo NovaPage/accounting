@@ -1,12 +1,18 @@
 import { getActiveSpace } from "@/lib/space";
 import { SpaceSettingsForm } from "@/components/spaces/SpaceSettingsForm";
-import { redirect } from "next/navigation";
 
 export default async function SpaceSettingsPage() {
   const space = await getActiveSpace();
 
   if (!space) {
-    redirect("/dashboard");
+    return (
+      <div className="space-y-4 max-w-2xl py-12 text-center">
+        <h3 className="text-lg font-medium">No se encontró un espacio activo</h3>
+        <p className="text-sm text-muted-foreground">
+          Selecciona o crea un espacio desde el menú superior para comenzar a administrarlo.
+        </p>
+      </div>
+    );
   }
 
   // Cast or ensuring type match

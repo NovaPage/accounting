@@ -40,10 +40,9 @@ export default async function SpaceSwitcher(): Promise<JSX.Element | null> {
 
     await selectActiveSpaceId(nextId);
 
-    // Revalidate key dashboard routes (adjust as needed)
-    revalidatePath("/dashboard");
-    revalidatePath("/dashboard/accounts");
-    revalidatePath("/dashboard/settings/space");
+    // Revalidate dashboard layout and pages
+    revalidatePath("/dashboard", "layout");
+    revalidatePath("/dashboard/settings/space", "page");
   }
 
   // 3) Render Client with data and server action

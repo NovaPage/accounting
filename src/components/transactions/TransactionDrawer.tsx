@@ -77,14 +77,28 @@ type Props = {
   onSubmitted?: () => void;
 };
 
+import { getSpace } from "@/lib/space";
+
 export default function TransactionDrawer(props: Props): React.ReactElement {
   const { open, onOpenChange, spaceId, defaultType = "expense", onSubmitted } = props;
 
+  const [activeSpaceId, setActiveSpaceId] = useState<string>(spaceId);
   const [tab, setTab] = useState<TransactionType>(defaultType);
   const [data, setData] = useState<DrawerData>({ accounts: [], categories: [] });
   const [loading, setLoading] = useState(false);
 
   const isDesktop = useMediaQuery("(min-width: 768px)");
+
+  // Sync spaceId or fetch fallback when opened
+  useEffect(() => {
+    if (spaceId) {
+      setActiveSpaceId(spaceId);
+    } else if (open) {
+      getSpace().then((s) => {
+        if (s?.id) setActiveSpaceId(s.id);
+      });
+    }
+  }, [spaceId, open]);
 
   // Reset tab on open
   useEffect(() => {
@@ -93,17 +107,17 @@ export default function TransactionDrawer(props: Props): React.ReactElement {
 
   // Fetch data when opened
   useEffect(() => {
-    if (open && spaceId) {
+    if (open && activeSpaceId) {
       setLoading(true);
-      fetchDrawerData(spaceId)
+      fetchDrawerData(activeSpaceId)
         .then(setData)
         .catch((err) => console.error("Failed to fetch drawer data", err))
         .finally(() => setLoading(false));
 
-      track("transaction_drawer_opened", { type: tab, spaceId });
-      logInfo("transaction_drawer_opened", { feature: "transactions", spaceId }, { type: tab });
+      track("transaction_drawer_opened", { type: tab, spaceId: activeSpaceId });
+      logInfo("transaction_drawer_opened", { feature: "transactions", spaceId: activeSpaceId }, { type: tab });
     }
-  }, [open, spaceId, tab]);
+  }, [open, activeSpaceId, tab]);
 
   const handleSubmitted = useMemo(
     () => () => {
@@ -131,7 +145,7 @@ export default function TransactionDrawer(props: Props): React.ReactElement {
             <TabsContent value="expense" className="mt-0">
               <Suspense fallback={<FormSkeleton />}>
                 <ExpenseForm
-                  spaceId={spaceId}
+                  spaceId={activeSpaceId}
                   onSubmitted={handleSubmitted}
                   accounts={data.accounts}
                   categories={data.categories}
@@ -142,7 +156,7 @@ export default function TransactionDrawer(props: Props): React.ReactElement {
             <TabsContent value="income" className="mt-0">
               <Suspense fallback={<FormSkeleton />}>
                 <IncomeForm
-                  spaceId={spaceId}
+                  spaceId={activeSpaceId}
                   onSubmitted={handleSubmitted}
                   accounts={data.accounts}
                   categories={data.categories}
@@ -153,7 +167,7 @@ export default function TransactionDrawer(props: Props): React.ReactElement {
             <TabsContent value="transfer" className="mt-0">
               <Suspense fallback={<FormSkeleton />}>
                 <TransferForm
-                  spaceId={spaceId}
+                  spaceId={activeSpaceId}
                   onSubmitted={handleSubmitted}
                   accounts={data.accounts}
                 />
@@ -165,7 +179,14 @@ export default function TransactionDrawer(props: Props): React.ReactElement {
     </div>
   );
 
-  if (!spaceId) return <></>;
+  const MissingSpaceContent = (
+    <div className="py-8 px-4 text-center space-y-3">
+      <p className="text-sm font-medium">No hay un espacio activo seleccionado</p>
+      <p className="text-xs text-muted-foreground">
+        Por favor selecciona o crea un espacio en el menú superior antes de registrar movimientos.
+      </p>
+    </div>
+  );
 
   if (isDesktop) {
     return (
@@ -177,7 +198,7 @@ export default function TransactionDrawer(props: Props): React.ReactElement {
               Registra un gasto, ingreso o transferencia en tu espacio actual.
             </DialogDescription>
           </DialogHeader>
-          {DrawerContent}
+          {activeSpaceId ? DrawerContent : MissingSpaceContent}
         </DialogContent>
       </Dialog>
     );
@@ -192,7 +213,7 @@ export default function TransactionDrawer(props: Props): React.ReactElement {
             Registra un gasto, ingreso o transferencia en tu espacio actual.
           </SheetDescription>
         </SheetHeader>
-        {DrawerContent}
+        {activeSpaceId ? DrawerContent : MissingSpaceContent}
       </SheetContent>
     </Sheet>
   );

@@ -10,7 +10,8 @@
 import Link from "next/link";
 import { ThemeToggle } from "./ThemeToggle"; // client component is fine inside server
 import SpaceSwitcher from "./SpaceSwitcher";
-import GlobalAdd from "@/components/transactions/GlobalAdd";
+import GlobalAddButton from "@/components/transactions/GlobalAddButton";
+import GlobalDrawer from "@/components/transactions/GlobalDrawer";
 import { getActiveSpace } from "@/lib/space";
 import { getServerComponentClient } from "@/lib/supabase/server";
 import { NavTabs } from "./NavTabs";
@@ -28,7 +29,7 @@ export async function NavBar() {
   }
 
   // Only fetch space if user is authenticated
-  let space;
+  let space = null;
   try {
     space = await getActiveSpace();
   } catch (e) {
@@ -56,11 +57,11 @@ export async function NavBar() {
             </div>
           </div>
 
-          {/* Right: Actions (Desktop GlobalAdd + Controls) & Mobile Controls */}
+          {/* Right: Actions (Desktop GlobalAddButton + Controls) & Mobile Controls */}
           <div className="flex items-center gap-2">
             {/* Desktop Add Button */}
             <div className="hidden md:flex items-center gap-2 mr-1">
-              <GlobalAdd space={space || null} />
+              <GlobalAddButton />
             </div>
 
             <div className="flex items-center gap-1">
@@ -74,8 +75,11 @@ export async function NavBar() {
         </div>
       </header>
 
+      {/* Global Transaction Drawer mounted cleanly at root level */}
+      <GlobalDrawer space={space} />
+
       {/* Standard Mobile Bottom Navigation Bar with Action Center */}
-      <MobileBottomNav space={space || null} />
+      <MobileBottomNav space={space} />
     </>
   );
 }

@@ -73,8 +73,10 @@ export async function clearActiveSpaceIdCookieSafe(): Promise<boolean> {
   }
 }
 
-/** Fetch a single space by id (minimal shape). */
+/** Fetch a single space by direct id lookup or user membership. */
 async function fetchSpaceById(id: string): Promise<SpaceRow | null> {
+  if (!id || id.trim().length === 0) return null;
+
   const supabase = await getServerComponentClient();
   const { data, error } = await supabase
     .from("spaces")
@@ -83,8 +85,11 @@ async function fetchSpaceById(id: string): Promise<SpaceRow | null> {
     .limit(1)
     .maybeSingle<{ id: string; name: string | null; currency_code: string | null }>();
 
-  if (error || !data) return null;
-  return { id: data.id, name: data.name ?? null, currency_code: data.currency_code ?? null };
+  if (!error && data) {
+    return { id: data.id, name: data.name ?? null, currency_code: data.currency_code ?? null };
+  }
+
+  return null;
 }
 
 /**
@@ -122,11 +127,20 @@ export async function fetchUserSpaces(): Promise<SpaceRow[]> {
       },
     );
 
-    // Fallback: try active cookie space (single-row read) to keep UI functional.
-    const activeId = await readActiveSpaceIdCookie();
-    if (activeId) {
-      const active = await fetchSpaceById(activeId);
-      if (active) return [active];
+    // Direct fallback without calling fetchSpaceById to prevent circular loop
+    try {
+      const activeId = await readActiveSpaceIdCookie();
+      if (activeId) {
+        const { data: directSpace } = await supabase
+          .from("spaces")
+          .select("id, name, currency_code")
+          .eq("id", activeId)
+          .limit(1)
+          .maybeSingle<{ id: string; name: string | null; currency_code: string | null }>();
+        if (directSpace) return [directSpace];
+      }
+    } catch {
+      // safe ignore
     }
     return [];
   }
@@ -147,44 +161,17 @@ export async function getFirstSpaceId(): Promise<string | null> {
 
 /**
  * Ensure there is an active space id (SSR-safe).
- * - Tries cookie; if missing, runs onboarding (idempotent) and returns the space id.
+ * - Tries cookie; if missing or invalid, resolves to the user's primary space or onboards.
  * - DOES NOT write cookies here (to avoid RSC write restrictions/warnings).
- * - Persist cookie later from a Server Action / Route Handler if you need to.
  */
 export async function ensureActiveSpaceId(currencyCode?: string): Promise<string> {
-  const cookieSpace = await readActiveSpaceIdCookie();
-  if (cookieSpace) {
-    logInfo("space_cookie_ok", { feature: "spaces", spaceId: cookieSpace });
-    return cookieSpace;
-  }
+  const space = await getActiveSpace(currencyCode);
+  if (space) return space.id;
 
-  // 1. Fallback check: Does the user already have a space?
-  try {
-    const existingSpaceId = await getFirstSpaceId();
-    if (existingSpaceId) {
-      logInfo("space_resolved_from_existing_membership", { feature: "spaces", spaceId: existingSpaceId });
-      return existingSpaceId;
-    }
-  } catch (err) {
-    logWarn("space_existing_check_failed", { feature: "spaces" }, err);
-  }
-
-  // 2. Onboard new user (idempotent)
-  try {
-    const spaceId = await ensureOnboarded({
-      currencyCode: (currencyCode ?? DEFAULT_CURRENCY).toUpperCase(),
-    });
-
-    logInfo("space_resolved_without_cookie_write", { feature: "spaces", spaceId });
-    return spaceId;
-  } catch (onboardErr) {
-    // 3. Last-ditch check: in case onboarding RPC threw after inserting
-    const fallbackSpaceId = await getFirstSpaceId();
-    if (fallbackSpaceId) {
-      return fallbackSpaceId;
-    }
-    throw onboardErr;
-  }
+  // Onboard new user (idempotent)
+  return ensureOnboarded({
+    currencyCode: (currencyCode ?? DEFAULT_CURRENCY).toUpperCase(),
+  });
 }
 
 /**
@@ -226,21 +213,48 @@ export async function selectActiveSpaceId(nextSpaceId: string): Promise<string> 
 
 /**
  * Gets the active space.
- * This can be called from client components.
+ * Callable from server components and server actions.
+ * Guarantees resolution:
+ * 1. Checks active space cookie; verifies it exists and is accessible.
+ * 2. If cookie is missing or invalid, falls back to the user's first available space.
+ * 3. If user has no spaces, triggers onboarding to create their default personal space.
  */
-export async function getSpace() {
-  const spaceId = await ensureActiveSpaceId();
-  const space = await fetchSpaceById(spaceId);
-  return space;
+export async function getActiveSpace(currencyCode?: string): Promise<SpaceRow | null> {
+  // 1. Try reading cookie
+  const cookieSpaceId = await readActiveSpaceIdCookie();
+  if (cookieSpaceId) {
+    const space = await fetchSpaceById(cookieSpaceId);
+    if (space) {
+      return space;
+    }
+  }
+
+  // 2. Fall back to user spaces list
+  try {
+    const userSpaces = await fetchUserSpaces();
+    if (userSpaces.length > 0) {
+      return userSpaces[0];
+    }
+  } catch (err) {
+    logWarn("get_active_space_list_failed", { feature: "spaces" }, err);
+  }
+
+  // 3. User has 0 spaces: ensure onboarding
+  try {
+    const newSpaceId = await ensureOnboarded({
+      currencyCode: (currencyCode ?? DEFAULT_CURRENCY).toUpperCase(),
+    });
+    return await fetchSpaceById(newSpaceId);
+  } catch (onboardErr) {
+    logError("get_active_space_onboard_failed", { feature: "spaces" }, onboardErr);
+  }
+
+  return null;
 }
 
 /**
- * Gets the active space.
- * This can be called from server components.
- * @returns The active space, or null if it doesn't exist.
+ * Client-callable alias for getActiveSpace.
  */
-export async function getActiveSpace() {
-  const spaceId = await ensureActiveSpaceId();
-  const space = await fetchSpaceById(spaceId);
-  return space;
+export async function getSpace(currencyCode?: string) {
+  return getActiveSpace(currencyCode);
 }

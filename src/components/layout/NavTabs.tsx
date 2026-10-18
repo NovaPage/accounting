@@ -15,21 +15,24 @@ export function NavTabs() {
     ];
 
     return (
-        <nav className="flex items-center gap-1">
+        <nav className="flex items-center gap-1" aria-label="Navegación principal">
             {tabs.map((tab) => {
+                const Icon = tab.icon;
                 const isActive = pathname === tab.href || (pathname.startsWith(tab.href) && tab.href !== "/dashboard");
 
                 return (
                     <Link
                         key={tab.href}
                         href={tab.href}
+                        aria-label={tab.name}
                         className={cn(
-                            "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                            "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
                             isActive
-                                ? "bg-secondary text-secondary-foreground"
+                                ? "bg-secondary text-secondary-foreground font-semibold"
                                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
                         )}
                     >
+                        <Icon className="h-4 w-4 shrink-0 opacity-80" />
                         <span className="hidden lg:inline">{tab.name}</span>
                     </Link>
                 );
