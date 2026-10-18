@@ -72,7 +72,14 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
   );
 
   // Refresh if needed; cookie updates are applied via setAll()
-  await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  // Protect all /dashboard routes at the edge
+  if (!user && request.nextUrl.pathname.startsWith("/dashboard")) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("next", request.nextUrl.pathname);
+    return NextResponse.redirect(loginUrl);
+  }
 
   return response;
 }

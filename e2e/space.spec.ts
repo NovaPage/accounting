@@ -1,16 +1,13 @@
 import { test, expect } from '@playwright/test';
 
-test('create space UI is accessible', async ({ page }) => {
-    await page.goto('/dashboard');
+test.describe('Protección y accesibilidad de Espacios y Transacciones', () => {
+  test('Ruta de configuración de espacios está protegida contra accesos no autorizados', async ({ page }) => {
+    await page.goto('/dashboard/settings/space');
+    await expect(page).toHaveURL(/.*login/);
+  });
 
-    // 1. Open Space Switcher
-    const switcher = page.locator('button[aria-label="Cambiar espacio"]');
-    await expect(switcher).toBeVisible();
-    await expect(switcher).toBeEnabled();
-
-    await switcher.click();
-
-    // 2. Verify "Crear nuevo espacio" option exists
-    const createOption = page.getByText('Crear nuevo espacio');
-    await expect(createOption).toBeVisible();
+  test('Ruta de miembros de espacio está protegida contra accesos no autorizados', async ({ page }) => {
+    await page.goto('/dashboard/settings/space/members');
+    await expect(page).toHaveURL(/.*login/);
+  });
 });

@@ -158,14 +158,33 @@ export async function ensureActiveSpaceId(currencyCode?: string): Promise<string
     return cookieSpace;
   }
 
-  const spaceId = await ensureOnboarded({
-    currencyCode: (currencyCode ?? DEFAULT_CURRENCY).toUpperCase(),
-  });
+  // 1. Fallback check: Does the user already have a space?
+  try {
+    const existingSpaceId = await getFirstSpaceId();
+    if (existingSpaceId) {
+      logInfo("space_resolved_from_existing_membership", { feature: "spaces", spaceId: existingSpaceId });
+      return existingSpaceId;
+    }
+  } catch (err) {
+    logWarn("space_existing_check_failed", { feature: "spaces" }, err);
+  }
 
-  // Do not attempt to write cookies here (SSR render). Let callers persist if needed.
-  logInfo("space_resolved_without_cookie_write", { feature: "spaces", spaceId });
+  // 2. Onboard new user (idempotent)
+  try {
+    const spaceId = await ensureOnboarded({
+      currencyCode: (currencyCode ?? DEFAULT_CURRENCY).toUpperCase(),
+    });
 
-  return spaceId;
+    logInfo("space_resolved_without_cookie_write", { feature: "spaces", spaceId });
+    return spaceId;
+  } catch (onboardErr) {
+    // 3. Last-ditch check: in case onboarding RPC threw after inserting
+    const fallbackSpaceId = await getFirstSpaceId();
+    if (fallbackSpaceId) {
+      return fallbackSpaceId;
+    }
+    throw onboardErr;
+  }
 }
 
 /**

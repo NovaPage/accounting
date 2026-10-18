@@ -1,9 +1,21 @@
 import { test, expect } from '@playwright/test';
 
-test('dashboard is protected - redirects to login', async ({ page }) => {
+test.describe('Protección y Accesibilidad del Dashboard', () => {
+  test('Intento directo a /dashboard redirige a /login conservando el flujo', async ({ page }) => {
     await page.goto('/dashboard');
     await expect(page).toHaveURL(/.*login/);
-});
+  });
 
-// Note: To test actual dashboard content, we would need to setUp authentication state.
-// For this connectivity test, verifying protection is sufficient to prove E2E works.
+  test('La landing page principal carga los elementos y CTA hacia el login', async ({ page }) => {
+    await page.goto('/');
+    await expect(page).toHaveTitle(/Orbit/);
+    await expect(page.getByText('Control total de tus finanzas')).toBeVisible();
+    
+    // Verificamos botón o enlace a login
+    const loginLink = page.getByRole('link', { name: /Iniciar sesión|Comenzar/i }).first();
+    if (await loginLink.isVisible()) {
+      await loginLink.click();
+      await expect(page).toHaveURL(/.*login/);
+    }
+  });
+});

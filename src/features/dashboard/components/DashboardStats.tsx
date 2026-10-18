@@ -31,7 +31,7 @@ export function DashboardStats({ metrics }: Props) {
                     <ArrowUpIcon className="h-4 w-4 text-emerald-500" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold text-emerald-600">
+                    <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                         {formatCurrency(metrics.monthlyIncome, metrics.currencyCode)}
                     </div>
                     <p className="text-xs text-muted-foreground">
@@ -47,7 +47,7 @@ export function DashboardStats({ metrics }: Props) {
                     <ArrowDownIcon className="h-4 w-4 text-rose-500" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold text-rose-600">
+                    <div className="text-2xl font-bold text-rose-600 dark:text-rose-400">
                         {formatCurrency(metrics.monthlyExpenses, metrics.currencyCode)}
                     </div>
                     <p className="text-xs text-muted-foreground">
@@ -60,10 +60,10 @@ export function DashboardStats({ metrics }: Props) {
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Ahorro</CardTitle>
-                    <PiggyBank className="h-4 w-4 text-blue-500" />
+                    <PiggyBank className="h-4 w-4 text-primary" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold text-blue-600">
+                    <div className="text-2xl font-bold text-primary">
                         {metrics.savingsRate}%
                     </div>
                     <p className="text-xs text-muted-foreground">
