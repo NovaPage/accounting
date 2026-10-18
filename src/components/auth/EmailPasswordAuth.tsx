@@ -7,7 +7,6 @@
  * - Spanish UI; English code/comments. Strict TS (no any).
  */
 import { useMemo, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -50,7 +49,6 @@ export interface EmailPasswordAuthProps {
 }
 
 export default function EmailPasswordAuth({ nextUrl = "/dashboard" }: EmailPasswordAuthProps) {
-  const router = useRouter();
   const supabase = getBrowserClient();
   const [serverMsg, setServerMsg] = useState<string>("");
   const [active, setActive] = useState<"login" | "signup">("login");
@@ -81,9 +79,9 @@ export default function EmailPasswordAuth({ nextUrl = "/dashboard" }: EmailPassw
         setServerMsg(error.message || "No se pudo iniciar sesión.");
         return;
       }
-      router.push(nextUrl);
+      window.location.assign(nextUrl);
     },
-    [router, nextUrl, supabase]
+    [nextUrl, supabase]
   );
 
   /** Sign-up form */

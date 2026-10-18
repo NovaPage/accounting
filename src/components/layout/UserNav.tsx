@@ -19,7 +19,7 @@ export function UserNav() {
     const handleSignOut = async () => {
         const supabase = getBrowserClient();
         await supabase.auth.signOut();
-        router.refresh();
+        window.location.assign("/login");
     };
 
     return (
