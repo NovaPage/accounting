@@ -74,4 +74,40 @@ test.describe('Flujos de Usuario: Espacios y Agregar Transacción', () => {
     await expect(page).toHaveURL(/.*\/dashboard\/settings\/space/, { timeout: 10000 });
     await expect(page.getByText('Ajustes del Espacio')).toBeVisible({ timeout: 5000 });
   });
+
+  test('Crear un nuevo espacio lo muestra como seleccionable en el selector de espacios', async ({ page }) => {
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(500);
+
+    // Abrir el selector de espacios en el header
+    const switcherBtn = page.getByRole('button', { name: /Cambiar espacio/i });
+    await expect(switcherBtn).toBeVisible();
+    await switcherBtn.click();
+
+    // Clic en Crear nuevo espacio
+    const createItem = page.getByRole('menuitem', { name: /Crear nuevo espacio/i });
+    await expect(createItem).toBeVisible();
+    await createItem.click();
+
+    // Rellenar formulario del diálogo
+    const spaceNameInput = page.getByLabel('Nombre');
+    await expect(spaceNameInput).toBeVisible();
+    const uniqueName = `Negocio ${Date.now().toString().slice(-4)}`;
+    await spaceNameInput.fill(uniqueName);
+
+    // Guardar
+    const saveBtn = page.getByRole('button', { name: /Crear Espacio/i });
+    await saveBtn.click();
+
+    // Debe recargar al dashboard con el nuevo espacio activo
+    await expect(page).toHaveURL(/.*dashboard/, { timeout: 10000 });
+
+    // El botón del switcher ahora debe mostrar el nombre del nuevo espacio
+    await expect(page.getByRole('button', { name: /Cambiar espacio/i })).toContainText(uniqueName, { timeout: 10000 });
+
+    // Al abrir el dropdown de nuevo, deben verse los espacios disponibles
+    await page.getByRole('button', { name: /Cambiar espacio/i }).click();
+    await expect(page.getByRole('menuitem', { name: uniqueName })).toBeVisible();
+    await expect(page.getByRole('menuitem', { name: /Personal/i })).toBeVisible();
+  });
 });

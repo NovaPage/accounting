@@ -70,6 +70,19 @@ export class SpaceService extends BaseService {
 
             if (error) throw error;
 
+            // Ensure owner membership in space_members table
+            try {
+                await supabase
+                    .from("space_members")
+                    .insert({
+                        space_id: data.id,
+                        user_id: user.id,
+                        role: "owner"
+                    });
+            } catch {
+                // Trigger already handles or ignore duplicate
+            }
+
             logInfo("space_created", { feature: "spaces", spaceId: data.id });
             return data.id;
         } catch (e) {

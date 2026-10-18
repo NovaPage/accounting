@@ -17,7 +17,8 @@ export async function CreateSpaceAction(name: string, currencyCode: string) {
         // Automatically switch to the new space
         await selectActiveSpaceId(spaceId);
 
-        revalidatePath("/");
+        revalidatePath("/dashboard", "layout");
+        revalidatePath("/dashboard/settings/space", "page");
         return { ok: true, message: "Espacio creado." };
     } catch {
         return { ok: false, message: "Error inesperado." };

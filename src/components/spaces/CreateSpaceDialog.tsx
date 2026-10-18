@@ -63,7 +63,7 @@ export default function CreateSpaceDialog({
                 toast.success("Espacio creado correctamente");
                 setOpen(false);
                 form.reset();
-                router.refresh();
+                window.location.assign("/dashboard");
             } else {
                 toast.error(res.message);
             }
